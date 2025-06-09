@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live SMS Monitor</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f7f7f7; }
+    #login-container, #app-container { max-width: 600px; margin: 40px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    h2 { margin-top: 0; }
+    input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
+    button { padding: 10px 20px; cursor: pointer; }
+    #messages { height: 70vh; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fafafa; }
+    .msg { margin-bottom: 8px; padding: 6px; border-bottom: 1px solid #eee; }
+    .incoming { color: #007bff; }
+    .outgoing { color: #28a745; }
+    #login-error { color: #d63384; display: none; }
+  </style>
+</head>
+<body>
+  <div id="login-container">
+    <h2>Admin Login</h2>
+    <form id="login-form">
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+      <p id="login-error">Invalid credentials</p>
+    </form>
+  </div>
+
+  <div id="app-container" style="display:none;">
+    <h2>Conversations</h2>
+    <div id="messages"></div>
+  </div>
+
+  <script>
+    const USER = 'admin';
+    const PASS = 'password';
+    const API_URL = 'https://live-monitoring.ispeedtoleadbot.workers.dev/conversations';
+    let lastTs = 0;
+
+    const loginForm = document.getElementById('login-form');
+    loginForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      if (u === USER && p === PASS) {
+        document.getElementById('login-container').style.display = 'none';
+        document.getElementById('app-container').style.display = 'block';
+        loadMessages();
+        setInterval(loadMessages, 5 * 60 * 1000); // every 5 minutes
+      } else {
+        document.getElementById('login-error').style.display = 'block';
+      }
+    });
+
+    async function loadMessages() {
+      try {
+        const url = lastTs ? `${API_URL}?since=${lastTs}` : API_URL;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(res.statusText);
+        const msgs = await res.json();
+        if (msgs.length) {
+          msgs.forEach(msg => appendMessage(msg));
+          lastTs = msgs[msgs.length - 1].ts;
+        }
+      } catch (e) {
+        console.error('Error fetching messages:', e);
+      }
+    }
+
+    function appendMessage(msg) {
+      const container = document.getElementById('messages');
+      const div = document.createElement('div');
+      div.className = `msg ${msg.direction}`;
+      const dt = new Date(msg.ts);
+      div.textContent = `[${dt.toLocaleString()}] (${msg.direction}) ${msg.phone}: ${msg.text}`;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+  </script>
+</body>
+</html>
