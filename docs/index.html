@@ -36,7 +36,7 @@
   <script>
     const USER = 'admin';
     const PASS = 'password';
-    const API_URL = 'https://live-monitoring.ispeedtoleadbot.workers.dev/conversations';
+    const API_URL = 'https://ispeedtoleadbot.ispeedtoleadbot.workers.dev/conversations';
     let lastTs = 0;
 
     const loginForm = document.getElementById('login-form');
@@ -48,7 +48,7 @@
         document.getElementById('login-container').style.display = 'none';
         document.getElementById('app-container').style.display = 'block';
         loadMessages();
-        setInterval(loadMessages, 1 * 60 * 1000); // every 5 minutes
+        setInterval(loadMessages, 5 * 60 * 1000); // every 5 minutes
       } else {
         document.getElementById('login-error').style.display = 'block';
       }
